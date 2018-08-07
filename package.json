@@ -1,0 +1,27 @@
+{
+  "name": "express_formation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "nodemon"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gwennaelle/serverFormation.git"
+  },
+  "author": "groy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gwennaelle/serverFormation/issues"
+  },
+  "homepage": "https://github.com/gwennaelle/serverFormation#readme",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "nodemon": "^1.18.3"
+  },
+  "dependencies": {
+    "express": "^4.16.3"
+  }
+}
