@@ -3,17 +3,24 @@ import fs from 'fs'
 
 const app = express()
 
+var bodyParser = require('body-parser');
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 // middleware
 // -------------------------------------------------------------------------------------
 app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8081');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     next();
 })
 
+app.use(express.static('public'));
+
 app.use(function (req, res, next) {
-    setTimeout(next, 5000);
+    setTimeout(next, 300);
 })
+
 
 
 // routes
@@ -40,10 +47,25 @@ app.get('/filteredMovies', (req, res) => {
     
 })
 
+app.get('/filteredEvents', (req, res) => {
+    var json = fs.readFileSync('src/data/GenericEvents.json')
+    var events = JSON.parse(json)
+   // console.log(movies)
+   const filteredEvents = events.map(event => {
+       return {
+       id: event.id, 
+       name: event.name
+       }
+    });
+
+    res.send(filteredEvents)
+    
+})
+
 app.get('/movies/:id', (req, res) => {
     var json = fs.readFileSync('src/data/movies.json')
     var movies = JSON.parse(json)
-   // console.log(movies)
+    //console.log(movies.length)
    const selecteddMovie = movies.find(movie => {
        return movie.id == req.params.id
        })
@@ -51,6 +73,21 @@ app.get('/movies/:id', (req, res) => {
     res.send(selecteddMovie)
     
 })
+
+app.post('/form', function(req, res) {
+    var json = fs.readFileSync('src/data/movies.json')
+    var movies = JSON.parse(json)
+    var length = JSON.parse(json).length
+    var newMovie = {
+        id: length,
+        title: req.body.title,
+        movieTag: req.body.tag,
+        synopsis: req.body.synopsis
+    }
+    movies.push(newMovie)
+    fs.writeFileSync('src/data/movies.json', JSON.stringify(movies))
+    res.send(newMovie);
+});
 
 /// Destructuration : newMovies = filteredMovies
 const movies = JSON.parse(fs.readFileSync('src/data/movies.json'))
