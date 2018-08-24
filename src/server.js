@@ -75,6 +75,21 @@ app.get('/movies/:id', (req, res) => {
 })
 
 app.post('/form', function(req, res) {
+    const errors = []
+
+    function validateField(field, msg){
+        if (!field || field.trim().length === 0){
+            errors.push(msg)
+        }
+    }
+    validateField(req.body.title, 'Missing title')
+    validateField(req.body.tag, 'Missing tag')
+    validateField(req.body.synopsis, 'Missing synospis')
+
+    if (errors.length > 0) {
+        return res.status(400).send(errors)
+    }
+    
     var json = fs.readFileSync('src/data/movies.json')
     var movies = JSON.parse(json)
     var length = JSON.parse(json).length
