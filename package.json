@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "serve": "nodemon"
+    "serve": "nodemon",
+    "test": "mocha -r babel-register"
   },
   "repository": {
     "type": "git",
@@ -19,7 +20,10 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
-    "nodemon": "^1.18.3"
+    "mocha": "^5.2.0",
+    "nodemon": "^1.18.3",
+    "should": "^13.2.3",
+    "supertest": "^3.1.0"
   },
   "dependencies": {
     "body-parser": "^1.18.3",
