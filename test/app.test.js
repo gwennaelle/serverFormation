@@ -1,6 +1,14 @@
 import supertest from 'supertest'
 import app from '../src/app'
 import should from 'should'
+import fs from 'fs'
+import config from 'config'
+import { movieList } from './movie-list'
+
+beforeEach('Reset movie file', () => {
+    // runs before each test in this block
+    fs.writeFileSync(config.get('jsonFile'), JSON.stringify(movieList))
+  });
 
 describe('GET /movies', () => {
     it('should send a list of movies', done => {
@@ -30,7 +38,7 @@ describe('GET /movies/:Id', () => {
     })
     it('should send 404 error', done => {
         supertest(app)
-        .get('/movies/11')
+        .get('/movies/51')
         .expect(404)
         .expect(({ text }) => {
             should.exist(text)

@@ -1,5 +1,6 @@
 import express from 'express'
 import fs from 'fs'
+import config from 'config'
 
 const app = express()
 
@@ -18,7 +19,7 @@ app.use(function (req, res, next) {
 app.use(express.static('public'));
 
 app.use(function (req, res, next) {
-    setTimeout(next, 0);
+    setTimeout(next, config.get('timeout'));
 })
 
 
@@ -26,12 +27,12 @@ app.use(function (req, res, next) {
 // routes
 // -------------------------------------------------------------------------------------
 app.get('/movies', (req, res) => {
-    var json = fs.readFileSync('src/data/movies.json')
+    var json = fs.readFileSync(config.get('jsonFile'))
     res.send(JSON.parse(json))
 })
 
 app.get('/filteredMovies', (req, res) => {
-    var json = fs.readFileSync('src/data/movies.json')
+    var json = fs.readFileSync(config.get('jsonFile'))
     var movies = JSON.parse(json)
    // console.log(movies)
    const filterdMovies = movies.map(movie => {
@@ -63,7 +64,7 @@ app.get('/filteredEvents', (req, res) => {
 })
 
 app.get('/movies/:id', (req, res) => {
-    var json = fs.readFileSync('src/data/movies.json')
+    var json = fs.readFileSync(config.get('jsonFile'))
     var movies = JSON.parse(json)
     //console.log(movies.length)
    const selecteddMovie = movies.find(movie => {
@@ -93,7 +94,7 @@ app.post('/form', function(req, res) {
         return res.status(400).send(errors)
     }
     
-    var json = fs.readFileSync('src/data/movies.json')
+    var json = fs.readFileSync(config.get('jsonFile'))
     var movies = JSON.parse(json)
     var length = JSON.parse(json).length
     var newMovie = {
@@ -103,12 +104,12 @@ app.post('/form', function(req, res) {
         synopsis: req.body.synopsis
     }
     movies.push(newMovie)
-    fs.writeFileSync('src/data/movies.json', JSON.stringify(movies))
+    fs.writeFileSync(config.get('jsonFile'), JSON.stringify(movies))
     res.send(newMovie);
 });
 
 /// Destructuration : newMovies = filteredMovies
-const movies = JSON.parse(fs.readFileSync('src/data/movies.json'))
+const movies = JSON.parse(fs.readFileSync(config.get('jsonFile')))
 const newMovies = movies.map(({ title, movieTag}) => {
     return { title, movieTag }
 })

@@ -1,6 +1,5 @@
-import express from 'express'
+import { app } from './app'
 
-const app = express()
 // demarrage de l'application
 // -------------------------------------------------------------------------------------
 app.listen(5000, function () {
