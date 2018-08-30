@@ -1,8 +1,10 @@
 import express from 'express'
 import fs from 'fs'
+import socketio from 'socket.io'
 import config from 'config'
 
 const app = express()
+const io = socketio(5010)
 
 var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
@@ -89,7 +91,7 @@ app.post('/form', function (req, res) {
         }
     }
     validateField(req.body.title, 'Missing title')
-    validateField(req.body.tag, 'Missing tag')
+    validateField(req.body.movieTag, 'Missing tag')
     validateField(req.body.synopsis, 'Missing synospis')
 
     if (errors.length > 0) {
@@ -104,9 +106,10 @@ app.post('/form', function (req, res) {
         updatedMovie = {
             id: Date.now(),
             title: req.body.title,
-            movieTag: req.body.tag,
+            movieTag: req.body.movieTag,
             synopsis: req.body.synopsis
         }
+        io.emit('insert-movie', updatedMovie)
         movies.push(updatedMovie)
     } else {
         updatedMovie = movies.find(movie => {
@@ -117,6 +120,7 @@ app.post('/form', function (req, res) {
         }
         else {
             Object.assign(updatedMovie, req.body)
+            io.emit('update-movie', updatedMovie)
             // updatedMovie.title = req.body.title,
             // updatedMovie.movieTag = req.body.tag,
             // updatedMovie.synopsis = req.body.synopsis
@@ -131,14 +135,15 @@ app.post('/form', function (req, res) {
 app.delete('/movies/:id', (req, res) => {
     var json = fs.readFileSync(config.get('jsonFile'))
     var movies = JSON.parse(json)
-    const selecteddMovie = movies.find(movie => {
+    const selectedMovie = movies.find(movie => {
         return movie.id == req.params.id
     })
     // res.send(JSON.parse(element.movietag))
-    if (!selecteddMovie) {
+    if (!selectedMovie) {
         return res.status(404).send('Film introuvable')
     }
-    movies.splice(movies.indexOf(selecteddMovie), 1)
+    io.emit('delete-movie', selectedMovie)
+    movies.splice(movies.indexOf(selectedMovie), 1)
     fs.writeFileSync(config.get('jsonFile'), JSON.stringify(movies))
     res.send(movies)
 
