@@ -48,11 +48,22 @@ describe('GET /movies/:Id', () => {
 })
 
 describe('POST /form', () => {
-    it('should work', done => {
+    it('should add a movie', done => {
         supertest(app)
         .post('/form')
         .expect(200)
-        .send({ title: 'a', tag:'b', synopsis: 'c' })
+        .send({ title: 'bonjour bonsoir', tag:'bonjoir', synopsis: 'il etait une fois' })
+        .expect(res => {
+            should.exist(res.body)
+            should.exist(res.body.id)
+        })
+        .end(done)
+    })
+    it('should update a movie', done => {
+        supertest(app)
+        .post('/form')
+        .expect(200)
+        .send({ id: 1, title: 'a', tag:'b', synopsis: 'c' })
         .expect(res => {
             should.exist(res.body)
             should.exist(res.body.id)
@@ -66,6 +77,26 @@ describe('POST /form', () => {
         .expect(({ text }) => {
             should.exist(text)
         })
+        .end(done)
+    })
+})
+
+describe('DELETE /movies/:Id', () => {
+    it('should delete a movies', done => {
+        supertest(app)
+        .delete('/movies/3')
+        .expect(204)
+        .end((res) => {
+            supertest(app)
+            .get('/movies/3')
+            .expect(404)
+            .end(done)
+        })
+    })
+    it('should send 404 error', done => {
+        supertest(app)
+        .delete('/movies/-1')
+        .expect(404)
         .end(done)
     })
 })

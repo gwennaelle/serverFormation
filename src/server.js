@@ -1,4 +1,4 @@
-import { app } from './app'
+import app from './app'
 
 // demarrage de l'application
 // -------------------------------------------------------------------------------------

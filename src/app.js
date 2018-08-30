@@ -13,6 +13,7 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8081');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, GET, DELETE');
     next();
 })
 
@@ -34,55 +35,56 @@ app.get('/movies', (req, res) => {
 app.get('/filteredMovies', (req, res) => {
     var json = fs.readFileSync(config.get('jsonFile'))
     var movies = JSON.parse(json)
-   // console.log(movies)
-   const filterdMovies = movies.map(movie => {
-       return {
-       id: movie.id, 
-       title: movie.title,
-       movieTag: movie.movieTag
-       }
-       // res.send(JSON.parse(element.movietag))
+    // console.log(movies)
+    const filterdMovies = movies.map(movie => {
+        return {
+            id: movie.id,
+            title: movie.title,
+            movieTag: movie.movieTag
+        }
+        // res.send(JSON.parse(element.movietag))
     });
 
     res.send(filterdMovies)
-    
+
 })
 
 app.get('/filteredEvents', (req, res) => {
     var json = fs.readFileSync('src/data/GenericEvents.json')
     var events = JSON.parse(json)
-   // console.log(movies)
-   const filteredEvents = events.map(event => {
-       return {
-       id: event.id, 
-       name: event.name
-       }
+    // console.log(movies)
+    const filteredEvents = events.map(event => {
+        return {
+            id: event.id,
+            name: event.name
+        }
     });
 
     res.send(filteredEvents)
-    
+
 })
 
 app.get('/movies/:id', (req, res) => {
     var json = fs.readFileSync(config.get('jsonFile'))
     var movies = JSON.parse(json)
-    //console.log(movies.length)
-   const selecteddMovie = movies.find(movie => {
-      return movie.id == req.params.id
+    const selecteddMovie = movies.find(movie => {
+        return movie.id == req.params.id
     })
     // res.send(JSON.parse(element.movietag))
     if (!selecteddMovie) {
-      return res.status(404).send('Film introuvable')
+        return res.status(404).send('Film introuvable')
     }
     res.send(selecteddMovie)
-    
+
 })
 
-app.post('/form', function(req, res) {
+
+// add or update movie
+app.post('/form', function (req, res) {
     const errors = []
 
-    function validateField(field, msg){
-        if (!field || field.trim().length === 0){
+    function validateField(field, msg) {
+        if (!field || field.trim().length === 0) {
             errors.push(msg)
         }
     }
@@ -93,35 +95,69 @@ app.post('/form', function(req, res) {
     if (errors.length > 0) {
         return res.status(400).send(errors)
     }
-    
+
     var json = fs.readFileSync(config.get('jsonFile'))
     var movies = JSON.parse(json)
-    var length = JSON.parse(json).length
-    var newMovie = {
-        id: length,
-        title: req.body.title,
-        movieTag: req.body.tag,
-        synopsis: req.body.synopsis
+    
+    let updatedMovie
+    if (!req.body.id) {
+        updatedMovie = {
+            id: Date.now(),
+            title: req.body.title,
+            movieTag: req.body.tag,
+            synopsis: req.body.synopsis
+        }
+        movies.push(updatedMovie)
+    } else {
+        updatedMovie = movies.find(movie => {
+            return movie.id == req.body.id
+        })
+        if (!updatedMovie) {
+            return res.status(404).send('Film introuvable')
+        }
+        else {
+            Object.assign(updatedMovie, req.body)
+            // updatedMovie.title = req.body.title,
+            // updatedMovie.movieTag = req.body.tag,
+            // updatedMovie.synopsis = req.body.synopsis
+        }
     }
-    movies.push(newMovie)
     fs.writeFileSync(config.get('jsonFile'), JSON.stringify(movies))
-    res.send(newMovie);
+    // console.log(updatesMovie)
+    res.send(updatedMovie);
 });
+
+// delete movie
+app.delete('/movies/:id', (req, res) => {
+    var json = fs.readFileSync(config.get('jsonFile'))
+    var movies = JSON.parse(json)
+    const selecteddMovie = movies.find(movie => {
+        return movie.id == req.params.id
+    })
+    // res.send(JSON.parse(element.movietag))
+    if (!selecteddMovie) {
+        return res.status(404).send('Film introuvable')
+    }
+    movies.splice(movies.indexOf(selecteddMovie), 1)
+    fs.writeFileSync(config.get('jsonFile'), JSON.stringify(movies))
+    res.send(movies)
+
+})
 
 /// Destructuration : newMovies = filteredMovies
 const movies = JSON.parse(fs.readFileSync(config.get('jsonFile')))
-const newMovies = movies.map(({ title, movieTag}) => {
+const newMovies = movies.map(({ title, movieTag }) => {
     return { title, movieTag }
 })
 
 app.get('/', function (req, res) {
     res.send('Hello World!')
 })
-  
+
 app.get('/ping', (req, res) => {
     res
-    .status(200)
-    .send('pong')
+        .status(200)
+        .send('pong')
 })
 
 // exports
