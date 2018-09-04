@@ -2,6 +2,7 @@ import express from 'express'
 import fs from 'fs'
 import socketio from 'socket.io'
 import config from 'config'
+import { Movie } from './db/movie.model'
 
 const app = express()
 const io = socketio(5010)
@@ -29,60 +30,48 @@ app.use(function (req, res, next) {
 
 // routes
 // -------------------------------------------------------------------------------------
-app.get('/movies', (req, res) => {
-    var json = fs.readFileSync(config.get('jsonFile'))
-    res.send(JSON.parse(json))
+app.get('/movies', async (req, res) => {
+//    var json = fs.readFileSync(config.get('jsonFile'))
+    const movies = await Movie.find({})
+//    res.send(JSON.parse(json))
+    res.send(movies)
 })
 
-app.get('/filteredMovies', (req, res) => {
-    var json = fs.readFileSync(config.get('jsonFile'))
-    var movies = JSON.parse(json)
+app.get('/filteredMovies', async (req, res) => {
+//    var json = fs.readFileSync(config.get('jsonFile'))
+//    var movies = JSON.parse(json)
     // console.log(movies)
-    const filterdMovies = movies.map(movie => {
-        return {
-            id: movie.id,
-            title: movie.title,
-            movieTag: movie.movieTag
-        }
-        // res.send(JSON.parse(element.movietag))
-    });
-
-    res.send(filterdMovies)
-
-})
-
-app.get('/filteredEvents', (req, res) => {
-    var json = fs.readFileSync('src/data/GenericEvents.json')
-    var events = JSON.parse(json)
-    // console.log(movies)
-    const filteredEvents = events.map(event => {
-        return {
-            id: event.id,
-            name: event.name
-        }
-    });
-
-    res.send(filteredEvents)
+    // const filteredMovies = movies.map(movie => {
+    //     return {
+    //         id: movie.id,
+    //         title: movie.title,
+    //         movieTag: movie.movieTag
+    //     }
+    //     // res.send(JSON.parse(element.movietag))
+    // });
+    const filteredMovies = await Movie.find({}).select('-synopsis')
+    res.send(filteredMovies)
 
 })
 
-app.get('/movies/:id', (req, res) => {
-    var json = fs.readFileSync(config.get('jsonFile'))
-    var movies = JSON.parse(json)
-    const selecteddMovie = movies.find(movie => {
-        return movie.id == req.params.id
-    })
+app.get('/movies/:id', async (req, res) => {
+    // var json = fs.readFileSync(config.get('jsonFile'))
+    // var movies = JSON.parse(json)
+    // const selecteddMovie = movies.find(movie => {
+    //     return movie.id == req.params.id
+    // })
+    const selectedMovie = await Movie.findByIdAndUpdate(parseInt(req.params.id))
     // res.send(JSON.parse(element.movietag))
-    if (!selecteddMovie) {
+    if (!selectedMovie) {
         return res.status(404).send('Film introuvable')
     }
-    res.send(selecteddMovie)
+    res.send(selectedMovie)
 
 })
 
 
 // add or update movie
-app.post('/form', function (req, res) {
+app.post('/form', async function (req, res) {
     const errors = []
 
     function validateField(field, msg) {
@@ -97,24 +86,22 @@ app.post('/form', function (req, res) {
     if (errors.length > 0) {
         return res.status(400).send(errors)
     }
-
-    var json = fs.readFileSync(config.get('jsonFile'))
-    var movies = JSON.parse(json)
-    
+ // var json = fs.readFileSync(config.get('jsonFile'))
+ // var movies = JSON.parse(json)
     let updatedMovie
     if (!req.body.id) {
-        updatedMovie = {
-            id: Date.now(),
+        updatedMovie = new Movie({
             title: req.body.title,
             movieTag: req.body.movieTag,
             synopsis: req.body.synopsis
-        }
-        io.emit('insert-movie', updatedMovie)
-        movies.push(updatedMovie)
-    } else {
-        updatedMovie = movies.find(movie => {
-            return movie.id == req.body.id
         })
+        io.emit('insert-movie', updatedMovie)
+        // movies.push(updatedMovie)
+    } else {
+        updatedMovie = await Movie.findById(parseInt(req.body.id))
+        // updatedMovie = movies.find(movie => {
+        //     return movie.id == req.body.id
+        // })
         if (!updatedMovie) {
             return res.status(404).send('Film introuvable')
         }
@@ -126,34 +113,35 @@ app.post('/form', function (req, res) {
             // updatedMovie.synopsis = req.body.synopsis
         }
     }
-    fs.writeFileSync(config.get('jsonFile'), JSON.stringify(movies))
-    // console.log(updatesMovie)
+    // fs.writeFileSync(config.get('jsonFile'), JSON.stringify(movies))
+    await updatedMovie.save()
     res.send(updatedMovie);
 });
 
 // delete movie
-app.delete('/movies/:id', (req, res) => {
-    var json = fs.readFileSync(config.get('jsonFile'))
-    var movies = JSON.parse(json)
-    const selectedMovie = movies.find(movie => {
-        return movie.id == req.params.id
-    })
-    // res.send(JSON.parse(element.movietag))
-    if (!selectedMovie) {
-        return res.status(404).send('Film introuvable')
-    }
-    io.emit('delete-movie', selectedMovie)
-    movies.splice(movies.indexOf(selectedMovie), 1)
-    fs.writeFileSync(config.get('jsonFile'), JSON.stringify(movies))
-    res.send(movies)
-
+app.delete('/movies/:id', async (req, res) => {
+    // var json = fs.readFileSync(config.get('jsonFile'))
+    // var movies = JSON.parse(json)
+    // const selectedMovie = movies.find(movie => {
+    //     return movie.id == req.params.id
+    // })
+    // // res.send(JSON.parse(element.movietag))
+    // if (!selectedMovie) {
+    //     return res.status(404).send('Film introuvable')
+    // }
+    // io.emit('delete-movie', selectedMovie)
+    // movies.splice(movies.indexOf(selectedMovie), 1)
+    // fs.writeFileSync(config.get('jsonFile'), JSON.stringify(movies))
+    await Movie.deleteOne({ _id: parseInt(req.params.id) })
+    io.emit('delete-movie', req.params.id)
+    res.status(203).end()
 })
 
 /// Destructuration : newMovies = filteredMovies
-const movies = JSON.parse(fs.readFileSync(config.get('jsonFile')))
-const newMovies = movies.map(({ title, movieTag }) => {
-    return { title, movieTag }
-})
+//const movies = JSON.parse(fs.readFileSync(config.get('jsonFile')))
+//const newMovies = movies.map(({ title, movieTag }) => {
+//    return { title, movieTag }
+//})
 
 app.get('/', function (req, res) {
     res.send('Hello World!')
