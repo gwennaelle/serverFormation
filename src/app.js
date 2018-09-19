@@ -14,7 +14,11 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 // middleware
 // -------------------------------------------------------------------------------------
 app.use(function (req, res, next) {
-    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8081');
+//    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8081');
+    var allowedOrigins = ['http://localhost:8081', 'http://localhost:9000']
+    let origin = req.headers.origin;
+    if (allowedOrigins.indexOf(origin)>-1){
+    res.setHeader('Access-Control-Allow-Origin', origin);}
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.setHeader('Access-Control-Allow-Methods', 'POST, GET, DELETE');
     next();
